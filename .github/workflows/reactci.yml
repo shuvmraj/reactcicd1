@@ -1,18 +1,14 @@
-name: React CI
 
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
+
+permissions:
+  contents: write  
 
 jobs:
-  build-and-test:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-        node-version: [18, 19, 20, 21]
+  build-and-deploy:
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
@@ -21,16 +17,22 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
-
-      - name: npm ci
-        run: npm ci --if-present
+          node-version: 18
 
       - name: Install dependencies
-        run: npm install vite@latest
+        run: npm ci
 
-      - name: Run tests
-        run: npm test --if-present
+      - name: Build the project
+        run: npm run build
 
-      - name: Build project
-        run: npm run build --if-present
+      - name: Configure Git identity
+        run: |
+          git config --global user.name "shuvmraj"
+          git config --global user.email "2300032645@kluniversity.in"
+
+      - name: Authenticate and deploy to GitHub Pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
+          npm run deploy
